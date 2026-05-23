@@ -1,13 +1,13 @@
 # quelllm-mcp
 
-MCP server exposing the **[quelllm.fr](https://quelllm.fr)** catalog of 250+ open-weights LLMs via Model Context Protocol tools. Use it from Claude Code, Cursor, Continue, or any MCP-compatible client to query models, compare them, estimate VRAM, and compute API vs self-hosted cost.
+MCP server exposing the **[quelllm.fr](https://quelllm.fr)** catalog of 190+ open-weights LLMs via Model Context Protocol tools. Use it from Claude Code, Cursor, Continue, or any MCP-compatible client to query models, compare them, estimate VRAM, and compute API vs self-hosted cost.
 
 ## Tools exposed
 
 | Tool | Description |
 |---|---|
 | `list_models(filter_origin?, filter_family?, max_params_b?)` | List models with filters (origin code, family, max params in B) |
-| `get_model(model_id)` | Full record for one model (params, vram per quant, tokSec, license, install command, etc.) |
+| `get_model(model_id)` | Full record for one model (params, vram per quant, context window, family, tags, license, URLs) |
 | `compare(model_a_id, model_b_id)` | Side-by-side comparison with verdict |
 | `estimate_vram(model_id, quant)` | VRAM in GB at chosen quant + recommended GPU/Mac tiers |
 | `estimate_cost(input_tokens_per_month, output_tokens_per_month, ...)` | Cost in EUR — full table API providers vs self-hosted hardware OR a specific id |
@@ -15,13 +15,19 @@ MCP server exposing the **[quelllm.fr](https://quelllm.fr)** catalog of 250+ ope
 
 ## Install
 
-### From PyPI (once published)
+Install from source (not yet on PyPI) :
 
 ```bash
-pip install quelllm-mcp
+pip install git+https://github.com/MGM-FALCON/quelllm-mcp.git
 ```
 
-### From source
+Or run without installing, using [uv](https://docs.astral.sh/uv/) :
+
+```bash
+uvx --from git+https://github.com/MGM-FALCON/quelllm-mcp.git quelllm-mcp
+```
+
+For local development :
 
 ```bash
 git clone https://github.com/MGM-FALCON/quelllm-mcp.git
@@ -31,13 +37,26 @@ pip install -e .
 
 ## Use with Claude Code
 
-Add to `~/.claude.json` or a project's `.mcp.json` :
+Add to `~/.claude.json` or a project's `.mcp.json`. If you installed with `pip` :
 
 ```json
 {
   "mcpServers": {
     "quelllm": {
       "command": "quelllm-mcp"
+    }
+  }
+}
+```
+
+Or zero-install with `uvx` :
+
+```json
+{
+  "mcpServers": {
+    "quelllm": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/MGM-FALCON/quelllm-mcp.git", "quelllm-mcp"]
     }
   }
 }
