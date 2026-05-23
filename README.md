@@ -118,6 +118,17 @@ Issues + PRs welcome. Particularly :
 - Hardware additions (new GPUs, Mac Mx series)
 - New tools (e.g. `find_alternatives_to(model_id)`, `recommend_gpu(budget_eur)`)
 
+### Tests
+
+A pytest smoke suite lives under `tests/`. It covers all 6 tools and the v1.1.0
+output invariants, never touches the network (local fixture + mocked `httpx`),
+and stubs the `mcp` SDK when it isn't importable — so it also runs on Python 3.9.
+
+```bash
+pip install -e ".[test]"
+pytest
+```
+
 ## Author
 
 Mohamed Meguedmi — [LinkedIn](https://linkedin.com/in/mohamed-meguedmi) · [Hugging Face](https://huggingface.co/MGMMMM)

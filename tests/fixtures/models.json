@@ -1,0 +1,63 @@
+{
+  "count": 4,
+  "updated": "2026-05-24",
+  "license": "CC BY 4.0",
+  "models": [
+    {
+      "id": "tiny-fr-7b",
+      "name": "Tiny FR 7B",
+      "author": "Mistral AI",
+      "origin": "fr",
+      "family": "Mistral",
+      "params": 7,
+      "license": "apache-2.0",
+      "ctx": 8192,
+      "tags": ["chat", "fast"],
+      "vram": {"q4": 5, "q5": 6, "q8": 9, "fp16": 15},
+      "url": "https://quelllm.fr/modeles/tiny-fr-7b",
+      "apiUrl": "https://quelllm.fr/api/models/tiny-fr-7b"
+    },
+    {
+      "id": "huge-us-70b",
+      "name": "Huge US 70B",
+      "author": "Meta",
+      "origin": "us",
+      "family": "Llama",
+      "params": 70,
+      "license": "llama-3.3",
+      "ctx": 131072,
+      "tags": ["reasoning", "chat"],
+      "vram": {"q4": 40, "q5": 48, "q8": 75, "fp16": 140},
+      "url": "https://quelllm.fr/modeles/huge-us-70b",
+      "apiUrl": "https://quelllm.fr/api/models/huge-us-70b"
+    },
+    {
+      "id": "manyparams-shortctx-32b",
+      "name": "ManyParams ShortCtx 32B",
+      "author": "Alibaba",
+      "origin": "cn",
+      "family": "Qwen",
+      "params": 32,
+      "license": "apache-2.0",
+      "ctx": 4096,
+      "tags": ["code"],
+      "vram": {"q4": 20, "q8": 35},
+      "url": "https://quelllm.fr/modeles/manyparams-shortctx-32b",
+      "apiUrl": "https://quelllm.fr/api/models/manyparams-shortctx-32b"
+    },
+    {
+      "id": "fewparams-longctx-3b",
+      "name": "FewParams LongCtx 3B",
+      "author": "Qwen Team",
+      "origin": "fr",
+      "family": "Qwen",
+      "params": 3,
+      "license": "mit",
+      "ctx": 200000,
+      "tags": ["long-context"],
+      "vram": {"q4": 3},
+      "url": "https://quelllm.fr/modeles/fewparams-longctx-3b",
+      "apiUrl": "https://quelllm.fr/api/models/fewparams-longctx-3b"
+    }
+  ]
+}
