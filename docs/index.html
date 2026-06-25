@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>quelllm-mcp — MCP server for the QuelLLM open-weights LLM catalog</title>
+<meta name="description" content="MCP server exposing the quelllm.fr catalog of 190+ open-weights LLMs. List, compare, estimate VRAM, and compute API vs self-hosted cost from Claude Code, Cursor, Continue or any MCP client.">
+<link rel="canonical" href="https://mgm-falcon.github.io/quelllm-mcp/">
+<style>
+  :root { --fg:#1a1a1a; --muted:#5a5a5a; --accent:#2563eb; --bg:#ffffff; --code:#f4f5f7; --border:#e5e7eb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e8e8e8; --muted:#a0a0a0; --accent:#7aa2ff; --bg:#0f1115; --code:#171a21; --border:#272b33; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:780px; margin:0 auto; padding:48px 22px 80px; }
+  header h1 { font-size:2rem; margin:0 0 .2em; letter-spacing:-.02em; }
+  .lede { font-size:1.15rem; color:var(--muted); margin:0 0 1.6em; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  h2 { margin:2.2em 0 .6em; font-size:1.3rem; letter-spacing:-.01em; }
+  table { width:100%; border-collapse:collapse; margin:1em 0; font-size:.95rem; }
+  th,td { text-align:left; padding:.55em .6em; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  code { background:var(--code); padding:.12em .4em; border-radius:5px; font-size:.88em; }
+  pre { background:var(--code); padding:14px 16px; border-radius:9px; overflow:auto; border:1px solid var(--border); }
+  pre code { background:none; padding:0; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; margin:1em 0 0; }
+  .pill { font-size:.82rem; background:var(--code); border:1px solid var(--border); border-radius:999px; padding:4px 11px; color:var(--muted); }
+  footer { margin-top:3em; padding-top:1.4em; border-top:1px solid var(--border); color:var(--muted); font-size:.9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>quelllm-mcp</h1>
+  <p class="lede">An open-source <strong>Model Context Protocol</strong> server that exposes the
+  <a href="https://quelllm.fr" rel="noopener">QuelLLM</a> catalog of <strong>190+ open-weights LLMs</strong>
+  to Claude Code, Cursor, Continue, Cline, or any MCP-compatible client — so your AI assistant can
+  answer "which local model runs on my GPU?" and "API vs self-hosted, what does it cost?".</p>
+  <div class="pills">
+    <span class="pill">FastMCP · Python ≥3.10</span>
+    <span class="pill">stdio transport</span>
+    <span class="pill">MIT license</span>
+    <span class="pill">6 tools</span>
+  </div>
+</header>
+
+<h2>What it does</h2>
+<p>The data comes live from <a href="https://quelllm.fr/api/" rel="noopener">quelllm.fr/api/</a>
+(CC BY 4.0, no key, cached locally for 1&nbsp;hour). QuelLLM is a free French comparator for
+<strong>local, self-hostable open-weights LLMs</strong>: it tells you which model fits your VRAM/GPU,
+compares models head-to-head, and ranks them by use case (code, French, vision). An English edition
+is available at <a href="https://bestllmfor.com" rel="noopener">bestllmfor.com</a>.</p>
+
+<h2>Tools exposed</h2>
+<table>
+  <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>list_models</code></td><td>List models with filters (origin, family, max params in B)</td></tr>
+    <tr><td><code>get_model</code></td><td>Full record for one model (params, VRAM per quant, context, license, URLs)</td></tr>
+    <tr><td><code>compare</code></td><td>Side-by-side comparison of two models with a verdict</td></tr>
+    <tr><td><code>estimate_vram</code></td><td>VRAM in GB at a chosen quantization + recommended GPU / Mac tiers</td></tr>
+    <tr><td><code>estimate_cost</code></td><td>Monthly cost in EUR — API providers vs self-hosted hardware</td></tr>
+    <tr><td><code>search_models</code></td><td>Fuzzy search by name, family, tag, or author</td></tr>
+  </tbody>
+</table>
+
+<h2>Install</h2>
+<p>Not on PyPI by design — install straight from the repository:</p>
+<pre><code>pip install git+https://github.com/MGM-FALCON/quelllm-mcp.git</code></pre>
+<p>Or run with zero install using <a href="https://docs.astral.sh/uv/" rel="noopener">uv</a>:</p>
+<pre><code>uvx --from git+https://github.com/MGM-FALCON/quelllm-mcp.git quelllm-mcp</code></pre>
+
+<h2>Use with Claude Code / Desktop / Cursor</h2>
+<pre><code>{
+  "mcpServers": {
+    "quelllm": { "command": "quelllm-mcp" }
+  }
+}</code></pre>
+<p>Then ask, in natural language: <em>"Which Mistral models run on a 12&nbsp;GB GPU?"</em> or
+<em>"Compare Llama 3.3 70B vs Qwen 2.5 32B"</em>.</p>
+
+<h2>Links</h2>
+<ul>
+  <li><a href="https://github.com/MGM-FALCON/quelllm-mcp" rel="noopener">Source code on GitHub</a></li>
+  <li><a href="https://quelllm.fr" rel="noopener">QuelLLM.fr</a> — the catalog &amp; web comparator (French)</li>
+  <li><a href="https://bestllmfor.com" rel="noopener">BestLLMfor.com</a> — English edition</li>
+</ul>
+
+<footer>
+  Built by <a href="https://www.linkedin.com/in/mohamed-meguedmi" rel="noopener">Mohamed Meguedmi</a>.
+  Data from <a href="https://quelllm.fr" rel="noopener">quelllm.fr</a> (CC BY 4.0). Code under MIT license.
+</footer>
+</div>
+</body>
+</html>
