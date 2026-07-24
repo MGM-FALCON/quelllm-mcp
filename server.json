@@ -1,16 +1,11 @@
 {
-  "$schema": "https://registry.modelcontextprotocol.io/schemas/server.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.MGM-FALCON/quelllm-mcp",
-  "description": "MCP server for quelllm.fr — 190+ open-weights LLM catalog. Tools: list, compare, estimate VRAM, estimate cost API vs self-hosted (in EUR).",
+  "description": "MCP server for quelllm.fr: 190+ open-weights LLM catalog - list, compare, VRAM and cost estimates",
   "version": "1.1.0",
-  "homepage": "https://quelllm.fr",
+  "websiteUrl": "https://quelllm.fr",
   "repository": {
     "url": "https://github.com/MGM-FALCON/quelllm-mcp",
     "source": "github"
-  },
-  "license": "MIT",
-  "packages": [],
-  "remotes": [],
-  "categories": ["data", "llm", "developer-tools"],
-  "keywords": ["llm", "open-weights", "catalog", "self-hosted", "cost-estimator", "french"]
+  }
 }
