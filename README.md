@@ -106,6 +106,21 @@ All data pulled from **[quelllm.fr/api/](https://quelllm.fr/api/)** (CC BY 4.0, 
 
 API pricing data (GPT-5, Claude Opus 4.7, Gemini 2.5, DeepSeek, Mistral) and hardware pricing (RTX 50-series, Mac M4) are hardcoded as of **2026-05** — verify semestrially.
 
+## Model-selection guides by language
+
+The MCP server exposes the same catalog to any compatible client. These companion guides explain model selection, memory trade-offs and repeatable evaluation tasks for different languages. They are source-based guides, not new hardware benchmarks.
+
+| Language | Guide |
+| --- | --- |
+| Français | [IA française en local : choisir un modèle Ministral](https://quelllm.fr/guide/ia-francaise-locale) |
+| English | [Local AI for English: how to choose Gemma, Qwen or Ministral](https://bestllmfor.com/guide/local-ai-english-models/) |
+| Deutsch | [Deutsche KI lokal nutzen: Teuken und Apertus im Vergleich](https://welchesllm.de/guide/deutsche-ki-lokal/) |
+| Italiano | [Intelligenza artificiale italiana in locale: Minerva e Velvet](https://qualellm.it/guide/intelligenza-artificiale-italiana-locale/) |
+| Español | [IA española en local: cómo elegir entre Salamandra y ALIA](https://quellm.com/guide/ia-espanola-local/) |
+| Português brasileiro | [IA em português no computador: como escolher um modelo Tucano2](https://qualllm.com/guide/ia-portugues-local-tucano2/) |
+| 日本語 | [日本語のローカルLLM：RakutenAIとTinySwallowの選び方](https://local-llm-navi.com/guide/nihongo-local-llm/) |
+| 简体中文 | [国产大模型本地部署：Qwen与DeepSeek蒸馏模型怎么选](https://nagellm.com/guide/guochan-llm-bendi-bushu/) |
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
