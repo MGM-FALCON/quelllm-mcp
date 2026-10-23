@@ -48,9 +48,10 @@
 </header>
 
 <h2>What it does</h2>
-<p>The data comes live from <a href="https://quelllm.fr/api/" rel="noopener">quelllm.fr/api/</a>
-(CC BY 4.0, no key, cached locally for 1&nbsp;hour). QuelLLM is a free French comparator for
-<strong>local, self-hostable open-weights LLMs</strong>: it tells you which model fits your VRAM/GPU,
+<p>The server requests catalog data from <a href="https://quelllm.fr/api/" rel="noopener">quelllm.fr/api/</a>
+(CC BY 4.0, no key, cached locally for 1&nbsp;hour). Catalog requests depend on backend availability;
+this static documentation does not verify its current health. QuelLLM is a free French comparator for
+<strong>local, self-hostable open-weights LLMs</strong>: it offers indicative memory estimates,
 compares models head-to-head, and ranks them by use case (code, French, vision). An English edition
 is available at <a href="https://bestllmfor.com" rel="noopener">bestllmfor.com</a>.</p>
 
@@ -66,6 +67,11 @@ is available at <a href="https://bestllmfor.com" rel="noopener">bestllmfor.com</
     <tr><td><code>search_models</code></td><td>Fuzzy search by name, family, tag, or author</td></tr>
   </tbody>
 </table>
+
+<h2>Understanding memory estimates</h2>
+<p>Catalog estimates are starting points, not measurements or guarantees that a model will fit.
+Read <a href="kv-cache-memory.html">KV cache memory: how context changes your VRAM budget</a>
+for a worked calculation, cache-strategy limits, and a short validation record.</p>
 
 <h2>Install</h2>
 <p>Not on PyPI by design — install straight from the repository:</p>

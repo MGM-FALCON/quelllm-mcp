@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KV cache memory: how context changes your VRAM budget</title>
+<meta name="description" content="Understand KV cache memory with a worked example, see how context length and parallel requests affect it, and record the limits before choosing a local LLM.">
+<meta name="author" content="BestLLMFor team">
+<link rel="canonical" href="https://mgm-falcon.github.io/quelllm-mcp/kv-cache-memory.html">
+<style>
+  :root { --fg:#1a1a1a; --muted:#5a5a5a; --accent:#2563eb; --bg:#ffffff; --code:#f4f5f7; --border:#e5e7eb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e8e8e8; --muted:#a0a0a0; --accent:#7aa2ff; --bg:#0f1115; --code:#171a21; --border:#272b33; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:780px; margin:0 auto; padding:48px 22px 80px; }
+  header h1 { font-size:2rem; margin:0 0 .2em; letter-spacing:-.02em; }
+  .lede { font-size:1.15rem; color:var(--muted); margin:0 0 1.6em; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  h2 { margin:2.2em 0 .6em; font-size:1.3rem; letter-spacing:-.01em; }
+  table { width:100%; border-collapse:collapse; margin:1em 0; font-size:.95rem; }
+  th,td { text-align:left; padding:.55em .6em; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  code { background:var(--code); padding:.12em .4em; border-radius:5px; font-size:.88em; }
+  pre { background:var(--code); padding:14px 16px; border-radius:9px; overflow:auto; border:1px solid var(--border); }
+  pre code { background:none; padding:0; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; margin:1em 0 0; }
+  .pill { font-size:.82rem; background:var(--code); border:1px solid var(--border); border-radius:999px; padding:4px 11px; color:var(--muted); }
+  footer { margin-top:3em; padding-top:1.4em; border-top:1px solid var(--border); color:var(--muted); font-size:.9rem; }
+
+  h1 { font-size:2rem; line-height:1.25; letter-spacing:-.02em; }
+  .table-scroll { overflow-x:auto; }
+  caption { text-align:left; font-size:.9rem; color:var(--muted); }
+  nav { margin-bottom:1.5em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav aria-label="Project"><a href="./">quelllm-mcp documentation</a></nav>
+<article>
+<h1>KV cache memory: how context changes your VRAM budget</h1>
+<p>A model&#x27;s weight file is only part of the memory needed to run it. KV cache memory holds attention keys and values from earlier tokens so the model can reuse them while generating text. A longer conversation can therefore change the memory budget even when the model file stays exactly the same.</p>
+<p>This guide explains one transparent calculation and its limits. It accompanies the <a href="https://mgm-falcon.github.io/quelllm-mcp/" rel="noopener">quelllm-mcp project documentation</a>. It contains no hardware benchmark, measured peak allocation, or claim that a particular model will fit your GPU.</p>
+<h2>Separate model weights from a running session</h2>
+<p>Weights are the model&#x27;s learned parameters. The cache is working data for a particular session. They can use different data types: a four-bit weight file does not tell you the cache&#x27;s precision. Check the runtime&#x27;s actual cache settings rather than inferring them from a filename.</p>
+<p>For standard decoder attention, the keys and values kept at each layer have dimensions for batch, key/value heads, cached tokens, and head size. The <a href="https://huggingface.co/docs/transformers/cache_explanation" rel="noopener">Transformers cache explanation</a> describes this storage. Other allocations still matter, including temporary computation buffers and runtime overhead. Adding a cache estimate to weight size does not produce a verified total.</p>
+<h2>Calculate KV cache memory from explicit assumptions</h2>
+<p>For identical full-attention layers with equal key and value head dimensions, a simple tensor-size calculation is:</p>
+<pre><code>M_KV = 2 × B × L × H_KV × D × T × S bytes</code></pre>
+<p>Here, B is the number of independent sequences; L is the layer count; H_KV is the number of key/value heads; D is the dimension of each head; T is the tokens stored per sequence; and S is bytes per cached scalar. The factor two accounts for keys and values. This is arithmetic derived from the tensor dimensions, not a measured allocation.</p>
+<p>Use key/value heads, not automatically the number of query heads. Architectures using <a href="https://arxiv.org/abs/2305.13245" rel="noopener">grouped-query attention</a> can have fewer key/value heads than query heads. Reading the wrong field from a model configuration can distort the estimate before any runtime overhead enters the picture.</p>
+<p>Consider a hypothetical configuration: L = 32, H_KV = 8, D = 128, S = 2, and B = 1. It stores 131072 bytes per token, or 128 KiB. The table uses binary units: <a href="https://physics.nist.gov/cuu/Units/binary.html" rel="noopener">NIST defines a GiB as 2^30 bytes</a>.</p>
+<div class="table-scroll"><table><caption>Hypothetical cache tensors only; not total VRAM</caption><thead><tr><th scope="col">Cached tokens per sequence</th><th scope="col">Independent sequences</th><th scope="col">Calculated cache tensors</th></tr></thead><tbody><tr><td>8192</td><td>1</td><td>1 GiB</td></tr><tr><td>16384</td><td>1</td><td>2 GiB</td></tr><tr><td>32768</td><td>1</td><td>4 GiB</td></tr><tr><td>32768</td><td>2</td><td>8 GiB</td></tr></tbody></table></div>
+<p>Every row is a toy calculation under the same assumptions. None identifies a real model or includes weights, allocator metadata, temporary buffers, or other processes.</p>
+<h2>Why context length and parallel requests matter</h2>
+<p>Within this example, keeping more tokens increases cache storage linearly. Two equally long, independent sequences double the tensor size. This explains why an idle single-user demo and a server handling simultaneous conversations can have different memory needs.</p>
+<p>T means stored tokens, which can include prompt and generated tokens. A model&#x27;s advertised context limit is not proof that every request stores that many tokens. Conversely, a runtime may reserve capacity ahead of use. Ask which quantity your estimate represents: current storage or reserved capacity?</p>
+<p>Prefix sharing, request scheduling, cache packing, and memory offload can change what a real server allocates on the GPU. The simple batch multiplier does not model those mechanisms. Read the runtime documentation before treating concurrent requests as identical independent copies.</p>
+<h2>Check the cache strategy before trusting the table</h2>
+<p>The <a href="https://huggingface.co/docs/transformers/kv_cache" rel="noopener">Transformers cache strategy guide</a> distinguishes dynamic, static, and quantized caches. A dynamic cache grows as tokens are processed. A static cache preallocates capacity. Layers using sliding-window or chunked attention can stop growing at their respective limits.</p>
+<p>KV cache memory therefore does not follow one universal context multiplier across all architectures. Hybrid layers, compressed representations, and unequal layer dimensions need a model-specific calculation. Cache quantization also introduces its own choices and overhead; changing its precision is not the same operation as choosing quantized weights.</p>
+<h2>Keep a short validation record</h2>
+<p>Free GPU memory is a snapshot, not the peak demand of a future request. For example, <a href="https://docs.pytorch.org/docs/2.14/generated/torch.cuda.memory.mem_get_info.html" rel="noopener">PyTorch&#x27;s memory-information function</a> reports global free and total device memory. It does not run your workload or predict its peak.</p>
+<p>Record the model revision, runtime version, weight format, cache type and precision, requested context, and expected concurrency. Then test a representative prompt and generation length on the actual setup. Keep observed peak memory and failures separate from estimates. This guide has performed no such inference test.</p>
+<h2>Where a rough calculator still helps</h2>
+<p>A rough estimate can narrow a shortlist before that test. The <a href="https://bestllmfor.com/recommandeur-quantification/" rel="noopener">BestLLMFor quantization calculator</a> provides weight estimates and a simplified context allowance. It is not an architecture-aware KV-cache forecast or a guarantee that a model will run. The MCP server&#x27;s catalog estimates should be interpreted with the same caution.</p>
+<p>Disclosure: this guide is published by the BestLLMFor team, which operates the linked calculator. Its website also offers paid kits and contains affiliate links. This documentation is free. It was drafted with AI assistance and checked against the primary sources linked above.</p>
+<p>Updated 2026-10-24.</p>
+</article>
+</div>
+</body>
+</html>
