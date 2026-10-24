@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serveur MCP QuelLLM : installation, outils et limites</title>
+<meta name="description" content="Installez le serveur MCP QuelLLM, découvrez ses six outils et comprenez le cache local, les estimations de mémoire et les hypothèses de coûts du SDK.">
+<link rel="canonical" href="https://mgm-falcon.github.io/quelllm-mcp/manuel-sdk-fr.html">
+<meta property="og:title" content="Utiliser le serveur MCP QuelLLM en français">
+<meta property="og:description" content="Une référence pratique pour installer le SDK, interroger le catalogue et lire ses estimations avec leurs limites.">
+<style>
+  :root { --fg:#1a1a1a; --muted:#5a5a5a; --accent:#2563eb; --bg:#fff; --code:#f4f5f7; --border:#e5e7eb; }
+  @media (prefers-color-scheme:dark) { :root { --fg:#e8e8e8; --muted:#a0a0a0; --accent:#7aa2ff; --bg:#0f1115; --code:#171a21; --border:#272b33; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  main { max-width:850px; margin:auto; padding:34px 22px 70px; }
+  h1 { font-size:2rem; line-height:1.25; letter-spacing:-.025em; }
+  h2 { margin-top:2.2em; font-size:1.35rem; }
+  h3 { margin-top:1.6em; font-size:1.1rem; }
+  a { color:var(--accent); text-underline-offset:3px; }
+  p,li { overflow-wrap:anywhere; }
+  code { background:var(--code); padding:.1em .3em; border-radius:4px; font-size:.87em; }
+  pre { max-width:100%; overflow:auto; padding:16px; border:1px solid var(--border); border-radius:8px; background:var(--code); }
+  pre code { padding:0; background:none; }
+  .table-wrap { max-width:100%; overflow-x:auto; }
+  table { min-width:700px; width:100%; border-collapse:collapse; font-size:.92rem; }
+  th,td { padding:.7em; text-align:left; vertical-align:top; border-bottom:1px solid var(--border); }
+  td code { overflow-wrap:normal; }
+  td:first-child { white-space:nowrap; }
+  .note { border-left:3px solid var(--accent); padding:4px 16px; background:var(--code); }
+  .meta,footer { color:var(--muted); font-size:.92rem; }
+  footer { margin-top:3em; border-top:1px solid var(--border); padding-top:1em; }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Documentation"><a href="./">Documentation du SDK</a> · <a href="https://github.com/MGM-FALCON/quelllm-mcp" rel="noopener">Code source</a></nav>
+<header>
+<h1>Utiliser le serveur MCP QuelLLM : installation et référence</h1>
+<p class="meta">L’équipe QuelLLM · Référence du code 1.1.0 · Relu le <time datetime="2026-10-24">24 octobre 2026</time></p>
+<p>Le serveur MCP QuelLLM donne à un client compatible accès au catalogue de modèles de <a href="https://quelllm.fr/" rel="noopener">QuelLLM</a>. Il fournit six outils pour chercher un modèle, lire sa fiche, comparer des données et calculer des estimations. Ce manuel explique comment le lancer et interpréter ses réponses.</p>
+<p>Le SDK ne télécharge pas les poids des modèles et ne lance pas leur inférence. Il interroge une source distante pour les outils de catalogue ; son transport MCP est <strong>stdio</strong>, avec un processus local qui échange sur son entrée et sa sortie standard.</p>
+</header>
+
+<h2>1. Installer et lancer le serveur MCP QuelLLM</h2>
+<p>Le projet demande Python 3.10 ou une version supérieure. Ses dépendances déclarées sont <code>mcp[cli]&gt;=1.0.0,&lt;2</code> et <code>httpx&gt;=0.27.0</code>. Les commandes suivantes proviennent du README du dépôt ; elles installent ou exécutent du code Python depuis GitHub.</p>
+<p>Pour installer le paquet, utilisez un environnement Python adapté à votre machine :</p>
+<pre><code>pip install git+https://github.com/MGM-FALCON/quelllm-mcp.git</code></pre>
+<p>La commande du serveur devient <code>quelllm-mcp</code>. Si vous utilisez déjà <code>uv</code>, le README propose aussi ce lancement avec <code>uvx</code>, qui gère l’environnement du paquet :</p>
+<pre><code>uvx --from git+https://github.com/MGM-FALCON/quelllm-mcp.git quelllm-mcp</code></pre>
+<p>Ces commandes suivent la branche par défaut du dépôt. Pour reproduire exactement une version, conservez aussi la révision du code utilisée. La référence de ce manuel est indiquée dans les sources en fin de page.</p>
+<p>Après installation, voici la forme de configuration illustrée par le README :</p>
+<pre><code>{
+  "mcpServers": {
+    "quelllm": { "command": "quelllm-mcp" }
+  }
+}</code></pre>
+<p>Le chemin du fichier de configuration dépend de votre client MCP. Celui-ci doit pouvoir trouver la commande dans son environnement. Ce bloc n’est pas une preuve de fonctionnement sur tous les clients : aucune nouvelle recette de compatibilité n’a été effectuée pour ce manuel.</p>
+
+<h2>2. Choisir parmi les six outils du SDK</h2>
+<p>Commencez par une recherche ou une liste, puis reprenez les identifiants réellement renvoyés par le catalogue. Un nom commercial et un identifiant technique peuvent différer. Les paramètres ci-dessous reprennent les fonctions exposées par le code.</p>
+<p class="meta">Sur mobile, faites défiler le tableau horizontalement pour lire les trois colonnes.</p>
+<div class="table-wrap" role="region" aria-label="Référence des six outils" tabindex="0">
+<table>
+<thead><tr><th scope="col">Outil</th><th scope="col">Entrées</th><th scope="col">Utilité et lecture du résultat</th></tr></thead>
+<tbody>
+<tr><td><code>list_models</code></td><td><code>filter_origin</code>, <code>filter_family</code>, <code>max_params_b</code> ; tous facultatifs.</td><td>Filtrer le catalogue par origine, famille ou nombre maximal de paramètres en milliards. Les données disponibles dépendent du catalogue chargé.</td></tr>
+<tr><td><code>search_models</code></td><td><code>query</code> ; <code>limit</code> vaut 10 par défaut.</td><td>Chercher dans le nom, l’identifiant, la famille, l’auteur et les tags. Le classement applique les règles de score du code, sans calcul d’embeddings.</td></tr>
+<tr><td><code>get_model</code></td><td><code>model_id</code>.</td><td>Lire une fiche du catalogue. Un identifiant inconnu produit un objet d’erreur, pas une fiche inventée.</td></tr>
+<tr><td><code>compare</code></td><td><code>model_a_id</code>, <code>model_b_id</code>.</td><td>Comparer deux fiches, notamment leurs paramètres, leur contexte et les valeurs mémoire. Le « verdict » est une synthèse de données, pas un classement de qualité mesuré.</td></tr>
+<tr><td><code>estimate_vram</code></td><td><code>model_id</code> ; <code>quant</code> vaut <code>q4</code> par défaut.</td><td>Lire la valeur mémoire du catalogue pour une quantification et produire une liste matérielle indicative. Les clés disponibles varient selon la fiche.</td></tr>
+<tr><td><code>estimate_cost</code></td><td><code>input_tokens_per_month</code>, <code>output_tokens_per_month</code> ; options détaillées plus bas.</td><td>Calculer un scénario API ou matériel à partir d’hypothèses intégrées au SDK. Les résultats ne constituent pas des devis actuels.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Exemple d’entrées pour <code>search_models</code>, à transmettre via votre client :</p>
+<pre><code>{ "query": "mistral", "limit": 5 }</code></pre>
+<p>Pour limiter ensuite une liste à 14 milliards de paramètres, les entrées de <code>list_models</code> peuvent être :</p>
+<pre><code>{ "max_params_b": 14 }</code></pre>
+<p>Ces exemples illustrent les paramètres ; ils n’ont pas été exécutés pour cette publication. Ils ne garantissent ni un nombre de résultats ni la disponibilité du catalogue au moment de votre appel.</p>
+
+<h2>3. Comprendre la source distante et le cache local</h2>
+<p>Les cinq outils de catalogue chargent <code>https://quelllm.fr/api/models.json</code>. Selon le dépôt, cette source ne demande pas de clé API. Le fichier est mis en cache dans <code>~/.cache/quelllm-mcp</code> ; la durée de fraîcheur prévue est de 3 600 secondes, soit une heure.</p>
+<p>Lorsqu’un cache valide est encore frais, le SDK le lit. Après expiration, il tente une requête distante. Si cette requête échoue, il réutilise le fichier de cache existant ; en l’absence de cache, il lève une erreur <code>RuntimeError</code>. Un résultat peut donc provenir de données plus anciennes que la durée annoncée en cas de panne réseau.</p>
+<div class="note"><p><strong>Disponibilité :</strong> l’état actuel de l’API n’a pas été validé pour ce manuel. Des contrôles antérieurs ont rencontré une restriction HTTP 403 ; aucune nouvelle requête de diagnostic n’a été lancée ici. La présence de cette documentation statique ne prouve pas que le catalogue distant répond.</p></div>
+<p>Le processus MCP s’exécute localement, mais les outils de catalogue dépendent de cette source réseau. Le SDK n’est donc pas autonome hors ligne par conception. Un cache existant peut aider lors d’une indisponibilité ; il ne garantit pas des informations récentes.</p>
+
+<h2>4. Lire les estimations de mémoire et de coût</h2>
+<p><code>estimate_vram</code> renvoie la valeur du catalogue dans <code>vram_gb</code>. Pour construire <code>fits_on</code>, le code retient les matériels de sa table dont la capacité dépasse cette valeur d’au moins 2 GB. Cette marge fixe ne mesure ni le cache KV réel, ni le pic d’allocation, ni les autres logiciels présents en mémoire.</p>
+<p>Une entrée dans <code>fits_on</code> ne garantit donc pas que le modèle démarre sur votre machine. Vérifiez séparément le fichier de poids, le moteur d’exécution, le contexte, la taille de lot et la mémoire disponible. Le <a href="kv-cache-memory.html">guide anglais sur le cache KV</a> détaille pourquoi le contexte change le budget mémoire.</p>
+<p>Pour <code>estimate_cost</code>, les deux volumes de jetons sont obligatoires. L’option <code>model_or_hardware</code> choisit une entrée de la table API ou matériel ; sans cette option, le code compare les scénarios disponibles.</p>
+<p>Les autres options sont <code>amort_months</code>, <code>electricity_eur_per_kwh</code>, <code>hours_active_per_day</code>, <code>caching_hit_rate</code>, <code>batch_mode</code>, <code>off_peak</code>, <code>pc_always_on</code> et <code>vat_recoverable</code>. Elles modifient les hypothèses d’amortissement, d’énergie, de cache, de traitement ou de TVA.</p>
+<p>Les tables de prix portent une note de fraîcheur <strong>2026-05</strong> dans le code. Le taux USD/EUR, les débits matériels et certaines remises sont aussi des constantes de calcul. Consultez les sources commerciales actuelles avant une décision d’achat ; ce manuel ne présente aucun prix ni débit comme une mesure récente.</p>
+
+<h2>5. Sources, licences et maintenance</h2>
+<p>Cette référence décrit la version 1.1.0 à partir de la révision <code>da0bae8</code> du dépôt. Pour vérifier un comportement ou signaler un écart, partez des fichiers suivants :</p>
+<ul>
+<li><a href="https://github.com/MGM-FALCON/quelllm-mcp/blob/da0bae8fd40c5efbabd806cc8e90891bec6041f2/README.md" rel="noopener">README : commandes et configuration d’exemple</a>.</li>
+<li><a href="https://github.com/MGM-FALCON/quelllm-mcp/blob/da0bae8fd40c5efbabd806cc8e90891bec6041f2/pyproject.toml" rel="noopener">Manifest : version, prérequis et dépendances</a>.</li>
+<li><a href="https://github.com/MGM-FALCON/quelllm-mcp/blob/da0bae8fd40c5efbabd806cc8e90891bec6041f2/quelllm_mcp/server.py" rel="noopener">Code : signatures, cache, estimations et hypothèses</a>.</li>
+</ul>
+<p>Le code est publié sous licence MIT. Le README indique CC BY 4.0 pour les données de l’API : la licence des données est distincte de celle du logiciel. Pour utiliser les outils dans le navigateur, retrouvez le <a href="https://quelllm.fr/recommandeur-quantification/" rel="noopener">calculateur de quantification QuelLLM</a>, qui fournit lui aussi des estimations de préparation.</p>
+<footer><p>Documentation publiée par l’équipe QuelLLM avec assistance IA et relecture du code. Le site QuelLLM propose aussi des kits payants et peut contenir des liens affiliés. Cette page est une documentation de notre outil, pas une évaluation indépendante ni un benchmark matériel.</p></footer>
+</main>
+</body>
+</html>
