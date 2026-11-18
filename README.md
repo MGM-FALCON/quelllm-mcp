@@ -104,7 +104,7 @@ Most MCP clients accept the same JSON config :
 
 All data pulled from **[quelllm.fr/api/](https://quelllm.fr/api/)** (CC BY 4.0, no key, CORS-enabled). Cached locally for 1h to avoid rate-limiting.
 
-API pricing data (GPT-5, Claude Opus 4.7, Gemini 2.5, DeepSeek, Mistral) and hardware pricing (RTX 50-series, Mac M4) are hardcoded as of **2026-05** — verify semestrially.
+The `estimate_cost` tool uses hardcoded API, hardware, electricity, and USD/EUR assumptions last checked in **2026-05**. They are not refreshed live and may be outdated; results are indicative estimates, not current quotes. Verify provider pricing, local hardware offers, electricity rates, and exchange rates before making a purchase decision. Each cost result carries this date and notice.
 
 ## Model-selection guides by language
 

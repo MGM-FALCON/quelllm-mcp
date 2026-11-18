@@ -25,8 +25,10 @@ QUELLLM_API = "https://quelllm.fr/api"
 CACHE_DIR = Path.home() / ".cache" / "quelllm-mcp"
 CACHE_TTL_S = 3600  # 1h
 USER_AGENT = "quelllm-mcp/1.0 (+https://quelllm.fr)"
+PRICING_DATA_AS_OF = "2026-05"
+PRICING_NOTICE = "Indicative hardcoded assumptions, not live prices. Verify current provider pricing, hardware quotes, electricity rates, and exchange rates before making a purchase decision."
 
-# Pricing data 2026-05 — vérifier semestriellement.
+# Pricing assumptions last checked 2026-05; they are not refreshed live.
 # Source : openai.com/api/pricing, anthropic.com/pricing, ai.google.dev/pricing, deepseek.com, mistral.ai
 # cachable: 'anthropic' (90% off input) | 'gemini' (75% off input) | None
 # batchable: True (50% off input + output, 24h delay) | False
@@ -295,7 +297,8 @@ def estimate_cost(
         vat_recoverable: True = subtract 16.67% VAT from hardware purchase price (HT pour pro). Default False.
 
     Returns:
-        cost estimate in EUR (with USD-to-EUR conversion ~0.92 for APIs)
+        indicative cost estimate in EUR (with USD-to-EUR conversion ~0.92 for APIs),
+        plus the assumptions date and a notice that prices are not live
     """
     usd_to_eur = 0.92
 
@@ -308,6 +311,8 @@ def estimate_cost(
                 "kind": "api",
                 "id": model_or_hardware,
                 "vendor": p["vendor"],
+                "pricing_data_as_of": PRICING_DATA_AS_OF,
+                "pricing_notice": PRICING_NOTICE,
                 "input_cost_usd": round(in_cost, 2),
                 "output_cost_usd": round(out_cost, 2),
                 "total_usd": round(total_usd, 2),
@@ -326,6 +331,8 @@ def estimate_cost(
                 "kind": "self_hosted",
                 "id": model_or_hardware,
                 "name": h["name"],
+                "pricing_data_as_of": PRICING_DATA_AS_OF,
+                "pricing_notice": PRICING_NOTICE,
                 "tokens_demanded_per_month": tokens_demanded,
                 "capacity_ok": stats["max_tokens_per_month"] >= tokens_demanded,
                 "tok_sec_mixed": h["tok_sec_mixed"],
@@ -374,6 +381,8 @@ def estimate_cost(
     return {
         "input_tokens_per_month": input_tokens_per_month,
         "output_tokens_per_month": output_tokens_per_month,
+        "pricing_data_as_of": PRICING_DATA_AS_OF,
+        "pricing_notice": PRICING_NOTICE,
         "modes": {
             "caching_hit_rate": caching_hit_rate,
             "batch_mode": batch_mode,
